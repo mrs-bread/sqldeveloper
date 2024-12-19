@@ -1,0 +1,85 @@
+-- Создаем таблицу Seller
+CREATE TABLE Seller (
+    id_seller INT PRIMARY KEY,
+    fullname VARCHAR2(255) NOT NULL,
+    address VARCHAR2(255) NOT NULL,
+    phone VARCHAR2(15) NOT NULL CHECK (LENGTH(phone) BETWEEN 12 AND 15 AND SUBSTR(phone, 1, 1) = '+'),
+    website VARCHAR2(255)
+);
+
+-- Создаем таблицу Producer
+CREATE TABLE Producer (
+    id_producer INT PRIMARY KEY,
+    fullname VARCHAR2(255) NOT NULL,
+    address VARCHAR2(255) NOT NULL,
+    website VARCHAR2(255)
+);
+
+-- Создаем таблицу Article
+CREATE TABLE Article (
+    id_art INT PRIMARY KEY,
+    name VARCHAR2(255) NOT NULL,
+    type VARCHAR2(4) NOT NULL CHECK (type IN ('кг', 'шт')),
+    hire_date DATE
+);
+
+-- Создаем таблицу price_list
+CREATE TABLE price_list (
+    id_price_list INT PRIMARY KEY,
+    id_seller INT NOT NULL,
+    id_producer INT NOT NULL,
+    id_art INT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (id_seller) REFERENCES Seller(id_seller),
+    FOREIGN KEY (id_producer) REFERENCES Producer(id_producer),
+    FOREIGN KEY (id_art) REFERENCES Article(id_art)
+);
+
+-- Вставка информации в таблицу Seller
+INSERT INTO Seller (id_seller, fullname, address, phone, website) VALUES
+(1, 'Seller A', 'Address A', '+79123456789', 'www.sellerA.com');
+
+INSERT INTO Seller (id_seller, fullname, address, phone, website) VALUES
+(2, 'Seller B', 'Address B', '+15551234567', 'www.sellerB.com');
+
+INSERT INTO Seller (id_seller, fullname, address, phone, website) VALUES
+(3, 'Seller C', 'Address C', '+447700998877', 'www.sellerC.com');
+
+
+-- Вставка информации в таблицу Producer
+INSERT INTO Producer (id_producer, fullname, address, website) VALUES
+(1, 'Producer X', 'Address X', 'www.producerX.com');
+
+INSERT INTO Producer (id_producer, fullname, address, website) VALUES
+(2, 'Producer Y', 'Address Y', 'www.producerY.com');
+
+INSERT INTO Producer (id_producer, fullname, address, website) VALUES
+(3, 'Producer Z', 'Address Z', 'www.producerZ.com');
+
+
+-- Вставка информации в таблицу Article
+INSERT INTO Article (id_art, name, type, hire_date) VALUES
+(1, 'Article 1', 'кг', TO_DATE('2024-03-08', 'YYYY-MM-DD'));
+
+INSERT INTO Article (id_art, name, type, hire_date) VALUES
+(2, 'Article 2', 'шт', TO_DATE('2024-03-15', 'YYYY-MM-DD'));
+
+INSERT INTO Article (id_art, name, type, hire_date) VALUES
+(3, 'Article 3', 'кг', TO_DATE('2024-03-22', 'YYYY-MM-DD'));
+
+
+-- Вставка информации в таблицу price-list
+INSERT INTO price_list (id_price_list, id_seller, id_producer, id_art, price) VALUES
+(1, 1, 1, 1, 10.50);
+
+INSERT INTO price_list (id_price_list, id_seller, id_producer, id_art, price) VALUES
+(2, 2, 2, 2, 25.00);
+
+INSERT INTO price_list (id_price_list, id_seller, id_producer, id_art, price) VALUES
+(3, 3, 3, 3, 15.75);
+
+-- Вывод таблиц
+select * FROM seller;
+select * FROM producer;
+select * FROM article;
+select * FROM price_list;
