@@ -1,0 +1,27 @@
+-- Сотрудники, нанятые после 22.10.2005
+SELECT first_name, last_name, hire_date, salary, commission_pct
+FROM employees
+WHERE hire_date > TO_DATE('2005-10-22', 'YYYY-MM-DD')
+ORDER BY hire_date;
+
+-- Программисты из Саутлейк
+SELECT e.last_name, j.job_title, d.department_name, l.city
+FROM employees e
+JOIN jobs j ON e.job_id = j.job_id
+JOIN departments d ON e.department_id = d.department_id
+JOIN locations l ON d.location_id = l.location_id
+WHERE j.job_title = 'Programmer'
+  AND l.city = 'Southlake';
+
+-- Города с более чем одним департаментом
+SELECT l.city, COUNT(*) AS department_count
+FROM departments d
+JOIN locations l ON d.location_id = l.location_id
+GROUP BY l.city
+HAVING COUNT(*) > 1;
+
+-- Руководители, нанятые позже некоторых подчиненных
+SELECT e.*
+FROM employees e
+WHERE e.employee_id IN (SELECT manager_id FROM employees)
+  AND e.hire_date > (SELECT MIN(hire_date) FROM employees WHERE manager_id = e.employee_id);
