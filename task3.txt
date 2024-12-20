@@ -75,7 +75,7 @@ EXCEPTION
     DBMS_OUTPUT.PUT_LINE('Ошибка при обновлении остатков: ' || SQLERRM); -- Выводим сообщение об ошибке
     ROLLBACK; -- Отменяем транзакцию в случае ошибки
 END;
-
+/
 --Ввод данных
 INSERT INTO Products (product_id, product_article, product_name, description, manufacturer) VALUES
 (1, 'ART123', 'Товар A', 'Описание товара A', 'Производитель X');
