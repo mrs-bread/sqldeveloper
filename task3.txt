@@ -1,0 +1,116 @@
+-- Создание таблиц
+-- Создаем таблицу Товары (Products)
+CREATE TABLE Products (
+    product_id NUMBER PRIMARY KEY, 
+    product_article VARCHAR2(50), 
+    product_name VARCHAR2(100), 
+    description VARCHAR2(255),
+    manufacturer VARCHAR2(100)
+);
+
+-- Создаем таблицу Склады (Warehouses)
+CREATE TABLE Warehouses (
+    warehouse_id NUMBER PRIMARY KEY,
+    address VARCHAR2(255)
+);
+
+-- Создаем таблицу Операции (Operations)
+CREATE TABLE Operations (
+    operation_id NUMBER PRIMARY KEY, 
+    product_id NUMBER, 
+    warehouse_id NUMBER, 
+    operation_type NUMBER, 
+    quantity NUMBER, 
+    FOREIGN KEY (product_id) REFERENCES Products(product_id),
+    FOREIGN KEY (warehouse_id) REFERENCES Warehouses(warehouse_id)
+);
+
+-- Создаем таблицу Остатки (Inventory)
+CREATE TABLE Inventory (
+    product_id NUMBER, 
+    warehouse_id NUMBER, 
+    quantity NUMBER, 
+    PRIMARY KEY (product_id, warehouse_id),
+    FOREIGN KEY (product_id) REFERENCES Products(product_id),
+    FOREIGN KEY (warehouse_id) REFERENCES Warehouses(warehouse_id)
+);
+
+-- Создание триггера
+create or replace TRIGGER update_inventory
+AFTER INSERT OR UPDATE OR DELETE ON Operations
+FOR EACH ROW
+DECLARE
+  v_quantity NUMBER; -- Переменная для хранения количества
+BEGIN
+  -- Получаем количество из таблицы операций
+  IF INSERTING THEN
+    v_quantity := :NEW.quantity; -- Вставка новой записи
+  ELSIF UPDATING THEN
+    v_quantity := :NEW.quantity - :OLD.quantity; -- Обновление записи
+  ELSIF DELETING THEN
+    v_quantity := - :OLD.quantity; -- Удаление записи
+  END IF;
+
+  -- Обновляем остатки в зависимости от типа операции
+  IF :NEW.operation_type = 1 THEN -- Приходная операция
+    UPDATE Inventory
+    SET quantity = quantity + v_quantity
+    WHERE product_id = :NEW.product_id
+      AND warehouse_id = :NEW.warehouse_id;
+  ELSIF :NEW.operation_type = 2 THEN -- Расходная операция
+    UPDATE Inventory
+    SET quantity = quantity - v_quantity
+    WHERE product_id = :NEW.product_id
+      AND warehouse_id = :NEW.warehouse_id;
+  END IF;
+
+  -- Если записи с такими product_id и warehouse_id нет, создаём её (только для приходных операций)
+  IF SQL%ROWCOUNT = 0 AND :NEW.operation_type = 1 THEN
+    INSERT INTO Inventory (product_id, warehouse_id, quantity)
+    VALUES (:NEW.product_id, :NEW.warehouse_id, v_quantity);
+  END IF;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Ошибка при обновлении остатков: ' || SQLERRM); -- Выводим сообщение об ошибке
+    ROLLBACK; -- Отменяем транзакцию в случае ошибки
+END;
+
+--Ввод данных
+INSERT INTO Products (product_id, product_article, product_name, description, manufacturer) VALUES
+(1, 'ART123', 'Товар A', 'Описание товара A', 'Производитель X');
+COMMIT;
+INSERT INTO Products (product_id, product_article, product_name, description, manufacturer) VALUES
+(2, 'ART456', 'Товар B', 'Описание товара B', 'Производитель Y');
+COMMIT;
+ select * FROM PRODUCTS;
+
+INSERT INTO Warehouses (warehouse_id, address) VALUES
+(1, 'Адрес склада 1');
+COMMIT;
+INSERT INTO Warehouses (warehouse_id, address) VALUES
+(2, 'Адрес склада 2');
+COMMIT;
+select * FROM WAREHOUSES;
+
+-- Приход товара A на склад 1
+INSERT INTO Operations (operation_id, product_id, warehouse_id, operation_type, quantity) VALUES (1, 1, 1, 1, 10);
+COMMIT;
+-- Расход товара A на склад 1
+INSERT INTO Operations (operation_id, product_id, warehouse_id, operation_type, quantity) VALUES (2, 1, 1, 2, 3);
+COMMIT;
+-- Приход товара B на склад 2
+INSERT INTO Operations (operation_id, product_id, warehouse_id, operation_type, quantity) VALUES (3, 2, 2, 1, 20);
+COMMIT;
+-- Приход товара A на склад 1 (проверка добавления количества)
+INSERT INTO Operations (operation_id, product_id, warehouse_id, operation_type, quantity) VALUES (4, 1, 1, 1, 5);
+COMMIT;
+-- Обновление операции (проверка обновления количества)
+UPDATE Operations SET quantity = 12 WHERE operation_id = 1;
+COMMIT;
+-- Удаление операции (проверка удаления количества)
+DELETE FROM Operations WHERE operation_id = 4;
+COMMIT;
+
+select * FROM OPERATIONS;
+select * FROM INVENTORY;
